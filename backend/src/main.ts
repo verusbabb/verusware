@@ -69,8 +69,23 @@ async function bootstrap() {
   });
 
   // Enable CORS for frontend
+  const allowedOrigins = [
+    'https://verusware.com',
+    'https://www.verusware.com',
+    config.frontend.url, // Keep existing URL for development
+  ].filter(Boolean); // Remove any undefined values
+
   app.enableCors({
-    origin: config.frontend.url,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
   });
 
