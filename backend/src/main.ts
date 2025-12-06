@@ -4,11 +4,38 @@ import { ConfigService } from '@nestjs/config';
 import { Logger } from 'nestjs-pino';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
+import { config as dotenvConfig } from 'dotenv';
+import { resolve } from 'path';
 import { AppModule } from './app.module';
 import { AppConfig } from './config/configuration';
 
 async function bootstrap() {
+  // Load .env file manually before checking for Secret Manager
+  // This ensures env vars are available for the secret loading check
+  // Try multiple paths: compiled dist location, source location, current working directory, and parent (for monorepo)
+  const envPaths = [
+    resolve(__dirname, '../.env.local'),      // backend/.env.local
+    resolve(__dirname, '../.env'),            // backend/.env
+    resolve(process.cwd(), '.env.local'),     // current dir .env.local
+    resolve(process.cwd(), '.env'),           // current dir .env
+    resolve(process.cwd(), '../.env.local'), // parent .env.local (monorepo)
+    resolve(process.cwd(), '../.env'),        // parent .env (monorepo)
+  ];
+  
+  // Load first available .env file
+  for (const envPath of envPaths) {
+    try {
+      const result = dotenvConfig({ path: envPath });
+      if (result.parsed && Object.keys(result.parsed).length > 0) {
+        break; // Found and loaded, stop looking
+      }
+    } catch (error) {
+      // File doesn't exist or can't be read - that's okay, try next path
+    }
+  }
+
   // Load secrets from Secret Manager if enabled (before app creation)
+  // Secret Manager values will override .env values
   const secretManagerEnabled = process.env.GCP_SECRET_MANAGER_ENABLED === 'true';
   const projectId = process.env.GCP_PROJECT_ID;
 
@@ -16,7 +43,6 @@ async function bootstrap() {
     try {
       const { initializeSecrets } = await import('./config/secrets/secret-loader');
       await initializeSecrets(projectId, true);
-      console.log('✓ Secrets loaded from GCP Secret Manager');
     } catch (error) {
       console.error('⚠ Warning: Could not load secrets from Secret Manager:', error);
       console.error('⚠ Falling back to .env files');

@@ -74,9 +74,15 @@ export async function loadSecrets(
     secretNames.map(async (secretName) => {
       try {
         secrets[secretName] = await getSecret(secretName, projectId);
-      } catch (error) {
-        console.error(`Failed to load secret ${secretName}:`, error);
-        throw error;
+      } catch (error: any) {
+        // Check if it's a NOT_FOUND error (secret doesn't exist)
+        if (error?.message?.includes('NOT_FOUND') || error?.code === 5) {
+          console.warn(`⚠ Secret ${secretName} not found in Secret Manager, skipping`);
+        } else {
+          // For other errors, log but don't throw (allows other secrets to load)
+          console.error(`⚠ Failed to load secret ${secretName}:`, error.message || error);
+        }
+        // Don't throw - allow other secrets to load
       }
     }),
   );

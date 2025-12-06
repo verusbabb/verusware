@@ -47,14 +47,24 @@ export async function loadSecretsFromManager(
     const secrets = await loadSecrets(secretsToLoad, projectId);
     
     // Set as environment variables so ConfigService can pick them up
+    let loadedCount = 0;
     for (const [secretName, secretValue] of Object.entries(secrets)) {
-      const envVarName = SECRET_MAPPINGS[secretName];
-      if (envVarName) {
-        process.env[envVarName] = secretValue;
-        console.log(`✓ Loaded secret: ${secretName} -> ${envVarName}`);
-      } else {
-        console.warn(`⚠ Secret ${secretName} has no mapping, skipping`);
+      if (secretValue) {
+        const envVarName = SECRET_MAPPINGS[secretName];
+        if (envVarName) {
+          process.env[envVarName] = secretValue;
+          console.log(`✓ Loaded secret: ${secretName} -> ${envVarName}`);
+          loadedCount++;
+        } else {
+          console.warn(`⚠ Secret ${secretName} has no mapping, skipping`);
+        }
       }
+    }
+    
+    if (loadedCount > 0) {
+      console.log(`✓ Successfully loaded ${loadedCount} secret(s) from GCP Secret Manager`);
+    } else {
+      console.warn(`⚠ No secrets were loaded from Secret Manager`);
     }
     
     return secrets;
