@@ -1,4 +1,4 @@
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { loadPublicConfig, type PublicConfig } from '@/services/config.service'
 import { env } from '@/config/env'
 

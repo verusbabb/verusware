@@ -8,7 +8,7 @@ import { useToastStore } from '@/stores/toast'
 export function useErrorHandler() {
   const toastStore = useToastStore()
 
-  onErrorCaptured((err: unknown, instance, info) => {
+  onErrorCaptured((err: unknown, _instance, info) => {
     console.error('Unhandled error:', err, info)
 
     let message = 'An unexpected error occurred'
