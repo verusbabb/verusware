@@ -33,6 +33,33 @@ steps:
     id: 'push-backend'
     waitFor: ['build-backend']
 
+  # Run database migrations
+  # This step runs migrations before deploying the app
+  # Uses Node.js to run migrations with Cloud SQL connection
+  - name: 'node:20'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        cd backend
+        npm ci --production=false
+        npm run migration:run
+    id: 'run-migrations'
+    waitFor: ['push-backend']
+    env:
+      - 'NODE_ENV=production'
+      - 'DATABASE_HOST=/cloudsql/$PROJECT_ID:us-central1:verusware-db'
+      - 'DATABASE_NAME=${_DATABASE_NAME:-verusware}'
+      - 'DATABASE_USER=${_DATABASE_USER:-postgres}'
+      - 'GCP_SECRET_MANAGER_ENABLED=true'
+      - 'GCP_PROJECT_ID=$PROJECT_ID'
+    # Connect to Cloud SQL instance via Unix socket
+    volumes:
+      - name: 'cloudsql'
+        path: /cloudsql
+    # Note: DATABASE_PASSWORD should be loaded from Secret Manager
+    # The migration script will use Secret Manager to get the password
+
   # Push frontend image
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/$PROJECT_ID/verusware-frontend']
@@ -63,8 +90,10 @@ steps:
       - '0'
       - '--max-instances'
       - '10'
+      - '--add-cloudsql-instances'
+      - '$PROJECT_ID:us-central1:verusware-db'
     id: 'deploy-backend'
-    waitFor: ['push-backend']
+    waitFor: ['run-migrations']
 
   # Deploy frontend to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -102,4 +131,12 @@ options:
   logging: CLOUD_LOGGING_ONLY
 
 timeout: '1200s'
+
+substitutions:
+  _FRONTEND_API_URL: 'https://api.verusware.com'
+  _APP_NAME: 'Verusware'
+  _APP_VERSION: '1.0.0'
+  _DATABASE_NAME: 'verusware'
+  _DATABASE_USER: 'postgres'
+  # _DATABASE_PASSWORD should be set via Secret Manager or Cloud Build secrets
 

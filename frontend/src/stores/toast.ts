@@ -66,6 +66,30 @@ export const useToastStore = defineStore('toast', {
         life: 4000,
       })
     },
+
+    /**
+     * Show loading message
+     * Returns the toast instance so it can be removed/replaced
+     */
+    showLoading(message: string, summary = 'Loading', group = 'default') {
+      return this.toast?.add({
+        severity: 'warn', // Use 'warn' for better visibility
+        summary,
+        detail: message,
+        life: 0, // Don't auto-close
+        group,
+        closable: false, // Don't allow manual close during loading
+      })
+    },
+
+    /**
+     * Remove a specific toast by its instance
+     */
+    removeToast(toast: any) {
+      if (toast) {
+        this.toast?.remove(toast)
+      }
+    },
   },
 })
 

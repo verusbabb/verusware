@@ -44,6 +44,9 @@ apiClient.interceptors.response.use(
   },
   (error: AxiosError) => {
     const toastStore = useToastStore()
+    
+    // Skip showing toast for health check errors - handled by health store
+    const isHealthCheck = error.config?.url?.includes('/health')
 
     // Handle different error types
     if (error.response) {
@@ -90,8 +93,10 @@ apiClient.interceptors.response.use(
         }
       }
 
-      // Show error toast
-      toastStore.showError(message)
+      // Show error toast (skip for health checks)
+      if (!isHealthCheck) {
+        toastStore.showError(message)
+      }
 
       // Log error for debugging
       console.error('API Error:', {
@@ -102,11 +107,15 @@ apiClient.interceptors.response.use(
       })
     } else if (error.request) {
       // Request was made but no response received
-      toastStore.showError('Network error. Please check your connection.')
+      if (!isHealthCheck) {
+        toastStore.showError('Network error. Please check your connection.')
+      }
       console.error('Network Error:', error.request)
     } else {
       // Something else happened
-      toastStore.showError('An unexpected error occurred.')
+      if (!isHealthCheck) {
+        toastStore.showError('An unexpected error occurred.')
+      }
       console.error('Error:', error.message)
     }
 
