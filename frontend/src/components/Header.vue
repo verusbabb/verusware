@@ -3,7 +3,7 @@
     <Toast />
 
     <div class="card">
-      <Menubar :model="items">
+      <Menubar :model="items" class="header-menubar">
         <template #start>
           <div class="text-2xl font-bold mr-8">
             Verus | <span class="text-indigo-500">Ware</span>
@@ -35,9 +35,8 @@
             <a 
               v-else 
               v-ripple 
-              class="flex items-center p-0" 
-              v-bind="props.action" 
-              style="padding: 0 !important;"
+              class="flex items-center" 
+              v-bind="props.action"
             >
               <span :class="item.icon"></span>
               <span class="ml-2">{{ item.label }}</span>
@@ -139,47 +138,18 @@
 </script>
 
 <style scoped>
-  /* Force equal spacing between all menu items - only on desktop */
-  @media (min-width: 1024px) {
-    :deep(.p-menubar-root-list) {
-      display: flex !important;
-      gap: 1.5rem !important;
-      align-items: center;
-    }
+  /* Add padding inside the Menubar */
+  .header-menubar :deep(.p-menubar) {
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
 
-  :deep(.p-menubar-root-list > li) {
-    margin: 0 !important;
-    padding: 0 !important;
-    flex-shrink: 0;
-  }
-
-  :deep(.p-menubar-root-list > li > a),
-  :deep(.p-menubar-root-list > li > .p-menubar-button),
-  :deep(.p-menubar-root-list > li > button),
-  :deep(.p-menubar-root-list > li > a.p-menubar-button-link) {
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-    margin: 0 !important;
-  }
-
-  /* Specifically target items with submenus that use props.action */
-  :deep(.p-menubar-root-list > li.p-menubar-item > a) {
-    padding: 0 !important;
-  }
-
-  /* Add top and bottom padding to the Menubar */
-  :deep(.p-menubar) {
-    padding-top: 1rem !important;
-    padding-bottom: 1rem !important;
-  }
-
-  /* Style submenu icons - green checkmark */
+  /* Design customization: Green checkmark icons in submenu */
   :deep(.p-submenu-list .pi) {
-    color: #10b981 !important; /* green-500 */
+    color: #10b981;
   }
 
-  /* Hide button label on mobile, show icon only */
+  /* Functional: Hide DB Connection Check button label on mobile */
   .db-check-button :deep(.p-button-label) {
     display: none;
   }
@@ -187,6 +157,32 @@
   @media (min-width: 1024px) {
     .db-check-button :deep(.p-button-label) {
       display: inline-block;
+    }
+  }
+
+  /* Design customization: Replace all icons with green checkmarks on mobile */
+  @media (max-width: 1023px) {
+    /* Add margin to mobile overlay container (handles both main menu and submenus) */
+    :deep(.p-menubar-mobile) {
+      margin-left: 1rem;
+      margin-right: 1rem;
+    }
+
+    :deep(.p-menubar-mobile-active .p-menubar-root-list > li > a .pi:not(.pi-angle-down)) {
+      color: #10b981;
+      margin-right: 0.5rem;
+    }
+
+    :deep(.p-menubar-mobile-active .p-menubar-root-list > li > a .pi.pi-home::before),
+    :deep(.p-menubar-mobile-active .p-menubar-root-list > li > a .pi.pi-pencil::before),
+    :deep(.p-menubar-mobile-active .p-menubar-root-list > li > a .pi.pi-graduation-cap::before),
+    :deep(.p-menubar-mobile-active .p-menubar-root-list > li > a .pi.pi-user::before) {
+      content: "\e90b";
+    }
+
+    :deep(.p-menubar-mobile-active .p-submenu-list > li > a .pi) {
+      margin-right: 0.5rem;
+      color: #10b981;
     }
   }
 </style>

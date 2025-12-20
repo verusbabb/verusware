@@ -1,15 +1,15 @@
 <template>
   <div class="flex lg:flex-row flex-col gap-4 lg:gap-0 bg-surface-0 dark:bg-surface-900 relative overflow-hidden min-h-screen lg:min-h-0">
-    <!-- Mobile profile image - positioned upper right corner of view -->
-    <div class="lg:hidden absolute top-4 right-4 z-30">
-      <img
-        src="/steve_2.jpeg"
-        alt="profile"
-        class="profile-image-mobile"
-      />
-    </div>
     <div class="flex-1 flex items-center justify-center relative z-10">
-      <div class="p-6 pt-12 lg:p-12 relative">
+      <div class="p-6 pt-8 lg:p-12 relative w-full">
+        <!-- Mobile profile image - centered at top -->
+        <div class="lg:hidden flex justify-center mb-6">
+          <img
+            src="/steve_2.jpeg"
+            alt="profile"
+            class="profile-image-mobile"
+          />
+        </div>
         <h1
           class="text-3xl lg:text-5xl font-bold text-surface-900 dark:text-surface-0 mb-4 lg:leading-normal text-center lg:text-left"
         >
@@ -83,15 +83,13 @@
   const showContactModal = ref(false);
 </script>
 <style scoped>
-  /* Mobile profile image - small and circular */
+  /* Mobile profile image - centered hero image */
   .profile-image-mobile {
-    width: 80px;
-    height: 80px;
+    width: 150px;
+    height: 150px;
     border-radius: 50%;
     object-fit: cover;
-    object-position: center;
-    border: 3px solid rgba(255, 255, 255, 0.8);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    object-position: center 20%;
   }
 
   /* Desktop hero image */
