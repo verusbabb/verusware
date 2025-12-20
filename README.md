@@ -1,46 +1,64 @@
 # Verusware
 
-A full-stack application with NestJS backend and Vue 3 frontend, ready for deployment to Google Cloud Platform.
+A full-stack application with NestJS backend and Vue 3 frontend, deployed to Google Cloud Platform with custom domain support.
 
 ## Tech Stack
 
 ### Backend
 - **NestJS** - Progressive Node.js framework
 - **TypeScript** - Type-safe JavaScript
+- **PostgreSQL** - Relational database
+- **Sequelize** - SQL ORM with TypeScript support
+- **GCP Secret Manager** - Secure secret management
 - **Docker** - Containerization
+- **Swagger/OpenAPI** - API documentation
 
 ### Frontend
 - **Vue 3** - Progressive JavaScript framework
 - **TypeScript** - Type-safe JavaScript
 - **Vite** - Next-generation frontend tooling
 - **Pinia** - State management
-- **PrimeVue** - UI component library
+- **PrimeVue** - UI component library (Material theme)
 - **Tailwind CSS** - Utility-first CSS framework
 - **Vue Router** - Official router for Vue.js
+- **Axios** - HTTP client
+- **Nginx** - Web server for production
 
 ## Project Structure
 
 ```
 verusware/
-├── backend/          # NestJS backend application
+├── backend/                    # NestJS backend application
 │   ├── src/
-│   │   ├── health/   # Health check endpoint
+│   │   ├── config/            # Configuration & Secret Manager
+│   │   ├── database/          # Sequelize models, migrations, seeders
+│   │   │   ├── entities/      # Database models
+│   │   │   ├── migrations/    # Database migrations
+│   │   │   └── seeders/       # Database seeders
+│   │   ├── health/            # Health check endpoint
+│   │   ├── common/            # Shared DTOs and filters
 │   │   ├── app.module.ts
 │   │   └── main.ts
 │   ├── Dockerfile
 │   └── package.json
-├── frontend/         # Vue 3 frontend application
+├── frontend/                   # Vue 3 frontend application
 │   ├── src/
-│   │   ├── assets/
-│   │   ├── router/
-│   │   ├── stores/   # Pinia stores
-│   │   ├── views/
+│   │   ├── assets/            # CSS and static assets
+│   │   ├── components/        # Vue components (Header, etc.)
+│   │   ├── views/             # Page views (Home, Blog)
+│   │   ├── stores/            # Pinia stores (health, toast)
+│   │   ├── services/          # API client and services
+│   │   ├── router/            # Vue Router configuration
+│   │   ├── config/              # Environment configuration
 │   │   ├── App.vue
 │   │   └── main.ts
+│   ├── public/                # Static assets (images, etc.)
 │   ├── Dockerfile
-│   ├── nginx.conf
+│   ├── nginx.conf             # Nginx configuration
+│   ├── cloudbuild.yaml        # Frontend Cloud Build config
 │   └── package.json
-├── cloudbuild.yaml   # GCP Cloud Build configuration
+├── deploy.sh                   # Deployment automation script
+├── check-dns.sh                # DNS propagation checker
 └── README.md
 ```
 
@@ -102,16 +120,35 @@ The frontend will be available at `http://localhost:5173`
 
 #### Backend
 Create a `.env` file in the `backend/` directory:
+
 ```env
+# Application
+NODE_ENV=development
 PORT=3000
 FRONTEND_URL=http://localhost:5173
+
+# Database (Local PostgreSQL)
+DATABASE_HOST=localhost
+DATABASE_PORT=5432
+DATABASE_NAME=verusware
+DATABASE_USER=postgres
+DATABASE_PASSWORD=your_password
+
+# GCP Secret Manager (set to false for local dev)
+GCP_SECRET_MANAGER_ENABLED=false
+GCP_PROJECT_ID=verusware
 ```
+
+**Note:** For production, secrets are stored in GCP Secret Manager. See `backend/src/config/README.md` for details.
 
 #### Frontend
 Create a `.env` file in the `frontend/` directory:
+
 ```env
 VITE_API_URL=http://localhost:3000
 ```
+
+**Note:** Frontend environment variables are baked into the build at build time. For production, use Cloud Build substitution variables (see Deployment section).
 
 ## Git Hooks (Pre-commit Linting & Formatting)
 
@@ -146,6 +183,48 @@ git commit --no-verify -m "your message"
 
 ⚠️ **Note:** Only bypass hooks when absolutely necessary, as it skips code quality checks.
 
+## Database Setup
+
+### Local Development
+
+1. Install and start PostgreSQL locally
+2. Create a database:
+```bash
+createdb verusware
+```
+3. The application will auto-sync tables in development mode
+
+### Migrations & Seeders
+
+The backend uses Sequelize migrations for production and auto-sync for development.
+
+**Run migrations (production):**
+```bash
+cd backend
+npm run migration:run
+```
+
+**Run migrations (development):**
+```bash
+cd backend
+npm run migration:run:dev
+```
+
+**Generate a new migration:**
+```bash
+cd backend
+npm run migration:generate -- your-migration-name
+```
+
+**Run seeders:**
+```bash
+cd backend
+npm run seed:run:dev    # Development
+npm run seed:run        # Production
+```
+
+See `backend/src/database/README.md` and `backend/src/database/MIGRATIONS.md` for detailed documentation.
+
 ## Building for Production
 
 ### Backend
@@ -162,6 +241,8 @@ npm run build
 ```
 
 The built files will be in the `dist/` directory.
+
+**Note:** Frontend builds include type checking. Use `npm run build:check` if you want to verify types separately.
 
 ## Docker
 
@@ -183,36 +264,38 @@ docker run -p 80:80 verusware-frontend
 
 ### Prerequisites
 1. Google Cloud Platform account
-2. GCP project created
+2. GCP project created (`verusware`)
 3. `gcloud` CLI installed and authenticated
-4. Cloud Build API enabled
-5. Cloud Run API enabled
-6. Container Registry API enabled
+4. Billing enabled on GCP project
+5. Required APIs enabled (see below)
 
 ### Initial Setup
 
-1. Set your GCP project ID:
+1. Set your GCP project:
 ```bash
-gcloud config set project YOUR_PROJECT_ID
+gcloud config set project verusware
 ```
 
 2. Enable required APIs:
 ```bash
-gcloud services enable cloudbuild.googleapis.com
-gcloud services enable run.googleapis.com
-gcloud services enable containerregistry.googleapis.com
-gcloud services enable sqladmin.googleapis.com
+gcloud services enable \
+  cloudbuild.googleapis.com \
+  run.googleapis.com \
+  containerregistry.googleapis.com \
+  sqladmin.googleapis.com \
+  secretmanager.googleapis.com \
+  compute.googleapis.com
 ```
 
 ### Database Setup (PostgreSQL)
 
-1. Create a Cloud SQL PostgreSQL instance (f1-micro free tier):
+1. Create a Cloud SQL PostgreSQL instance:
 ```bash
 gcloud sql instances create verusware-db \
   --database-version=POSTGRES_15 \
   --tier=db-f1-micro \
   --region=us-central1 \
-  --root-password=YOUR_PASSWORD
+  --root-password=YOUR_SECURE_PASSWORD
 ```
 
 2. Create a database:
@@ -221,18 +304,44 @@ gcloud sql databases create verusware \
   --instance=verusware-db
 ```
 
-### Deploy with Cloud Build
-
-1. Submit the build:
+3. Store database password in Secret Manager:
 ```bash
-gcloud builds submit --config cloudbuild.yaml
+echo -n "YOUR_DATABASE_PASSWORD" | gcloud secrets create database-password \
+  --data-file=- \
+  --replication-policy="automatic"
 ```
 
-This will:
-- Build Docker images for both backend and frontend
-- Push images to Container Registry
-- Deploy backend to Cloud Run
-- Deploy frontend to Cloud Run
+### Secrets Setup
+
+Store sensitive configuration in GCP Secret Manager:
+
+```bash
+# Database password (already done above)
+# Database user (if different from postgres)
+echo -n "postgres" | gcloud secrets create database-user \
+  --data-file=- \
+  --replication-policy="automatic"
+```
+
+### Quick Deployment
+
+Use the automated deployment script:
+
+```bash
+# Deploy both backend and frontend
+./deploy.sh
+
+# Or deploy individually
+./deploy.sh backend
+./deploy.sh frontend
+```
+
+The script handles:
+- Building Docker images
+- Pushing to Container Registry
+- Deploying to Cloud Run with proper configuration
+- Setting up Cloud SQL connections
+- Configuring environment variables
 
 ### Manual Deployment
 
@@ -241,13 +350,13 @@ This will:
 1. Build and push the image:
 ```bash
 cd backend
-gcloud builds submit --tag gcr.io/YOUR_PROJECT_ID/verusware-backend
+gcloud builds submit --tag gcr.io/verusware/verusware-backend
 ```
 
 2. Deploy to Cloud Run:
 ```bash
 gcloud run deploy verusware-backend \
-  --image gcr.io/YOUR_PROJECT_ID/verusware-backend \
+  --image gcr.io/verusware/verusware-backend \
   --region us-central1 \
   --platform managed \
   --allow-unauthenticated \
@@ -255,21 +364,28 @@ gcloud run deploy verusware-backend \
   --memory 512Mi \
   --cpu 1 \
   --min-instances 0 \
-  --max-instances 10
+  --max-instances 10 \
+  --set-env-vars NODE_ENV=production,GCP_SECRET_MANAGER_ENABLED=true,GCP_PROJECT_ID=verusware,DATABASE_HOST=/cloudsql/verusware:us-central1:verusware-db,DATABASE_NAME=verusware \
+  --add-cloudsql-instances verusware:us-central1:verusware-db
 ```
 
 #### Deploy Frontend
 
-1. Build and push the image:
+1. Get backend URL:
 ```bash
-cd frontend
-gcloud builds submit --tag gcr.io/YOUR_PROJECT_ID/verusware-frontend
+BACKEND_URL=$(gcloud run services describe verusware-backend \
+  --region us-central1 \
+  --format 'value(status.url)')
 ```
 
-2. Deploy to Cloud Run:
+2. Build and deploy with API URL:
 ```bash
+cd frontend
+gcloud builds submit --config=cloudbuild.yaml \
+  --substitutions=_FRONTEND_API_URL=${BACKEND_URL}
+
 gcloud run deploy verusware-frontend \
-  --image gcr.io/YOUR_PROJECT_ID/verusware-frontend \
+  --image gcr.io/verusware/verusware-frontend \
   --region us-central1 \
   --platform managed \
   --allow-unauthenticated \
@@ -280,24 +396,47 @@ gcloud run deploy verusware-frontend \
   --max-instances 10
 ```
 
+### Custom Domain Setup
+
+The application is configured for custom domains:
+- **Backend**: `api.verusware.com`
+- **Frontend**: `verusware.com` and `www.verusware.com`
+
+1. Create domain mappings:
+```bash
+# Backend
+gcloud run domain-mappings create \
+  --service verusware-backend \
+  --domain api.verusware.com \
+  --region us-central1
+
+# Frontend
+gcloud run domain-mappings create \
+  --service verusware-frontend \
+  --domain verusware.com \
+  --region us-central1
+
+gcloud run domain-mappings create \
+  --service verusware-frontend \
+  --domain www.verusware.com \
+  --region us-central1
+```
+
+2. Get DNS records and configure in your DNS provider (e.g., GoDaddy)
+
+3. Check DNS propagation:
+```bash
+./check-dns.sh
+```
+
 ### Frontend Configuration
 
-**Important:** Frontend environment variables are baked into the build at build time, not runtime.
+**Important:** Frontend environment variables are baked into the build at build time, not runtime. Use Cloud Build substitution variables:
 
-1. Get your backend URL:
 ```bash
-BACKEND_URL=$(gcloud run services describe verusware-backend \
-  --region us-central1 \
-  --format 'value(status.url)')
+gcloud builds submit --config=cloudbuild.yaml \
+  --substitutions=_FRONTEND_API_URL=https://api.verusware.com
 ```
-
-2. Rebuild and redeploy frontend with the correct API URL:
-```bash
-gcloud builds submit --config cloudbuild.yaml \
-  --substitutions=_FRONTEND_API_URL=${BACKEND_URL}
-```
-
-**Note:** Frontend configuration must be set during the build process. See `DEPLOYMENT.md` for detailed deployment instructions.
 
 ## Cost Optimization
 
@@ -310,7 +449,28 @@ This setup is optimized for free/low-cost tiers:
 
 Estimated monthly cost: **$0-5** for low-traffic applications.
 
-## Health Check
+## Features
+
+### Backend Features
+- ✅ Health check endpoint (`/health`) with database connection status
+- ✅ PostgreSQL database with Sequelize ORM
+- ✅ Database migrations and seeders
+- ✅ GCP Secret Manager integration for secure configuration
+- ✅ Swagger/OpenAPI documentation at `/api`
+- ✅ Structured logging with Pino
+- ✅ CORS configuration for frontend
+- ✅ Type-safe configuration with validation
+
+### Frontend Features
+- ✅ Responsive design with PrimeVue Material theme
+- ✅ Health check integration with loading states
+- ✅ Contact modal with email and LinkedIn links
+- ✅ Toast notifications for user feedback
+- ✅ Modern UI with Tailwind CSS
+- ✅ Type-safe API client with Axios
+- ✅ State management with Pinia
+
+### Health Check
 
 The backend includes a health check endpoint at `/health` that returns:
 ```json
@@ -321,22 +481,48 @@ The backend includes a health check endpoint at `/health` that returns:
 }
 ```
 
-The frontend includes a demo page that calls this endpoint to verify connectivity.
+The frontend includes a "DB Connection Check" button in the header that:
+- Shows a loading toast during the request
+- Displays success/error messages via PrimeVue toasts
+- Handles cold start delays gracefully
 
 ## Development Scripts
+
+### Root Level
+- `npm install` - Install dependencies and set up git hooks
 
 ### Backend
 - `npm run start:dev` - Start development server with hot reload
 - `npm run build` - Build for production
 - `npm run start:prod` - Start production server
 - `npm run lint` - Run ESLint
+- `npm run format` - Format code with Prettier
 - `npm test` - Run tests
+- `npm run migration:generate -- <name>` - Generate a new migration
+- `npm run migration:run:dev` - Run migrations (development)
+- `npm run migration:run` - Run migrations (production)
+- `npm run seed:run:dev` - Run seeders (development)
+- `npm run seed:run` - Run seeders (production)
 
 ### Frontend
 - `npm run dev` - Start development server
 - `npm run build` - Build for production
+- `npm run build:check` - Type check and build
 - `npm run preview` - Preview production build
 - `npm run lint` - Run ESLint
+- `npm run format` - Format code with Prettier
+
+## Project URLs
+
+- **Frontend**: https://verusware.com
+- **Backend API**: https://api.verusware.com
+- **API Documentation**: https://api.verusware.com/api
+
+## Additional Documentation
+
+- **Backend Configuration**: `backend/src/config/README.md`
+- **Database Migrations**: `backend/src/database/MIGRATIONS.md`
+- **Database Module**: `backend/src/database/README.md`
 
 ## License
 
