@@ -1,189 +1,121 @@
 <template>
-  <div>
+  <header class="site-header">
     <Toast />
+    <Menubar :model="menuItems" class="header-menubar">
+      <template #start>
+        <RouterLink to="/" class="site-logo">
+          Verus<span class="site-logo-accent">ware</span>
+        </RouterLink>
+      </template>
 
-    <div class="card">
-      <Menubar :model="items" class="header-menubar">
-        <template #start>
-          <div class="text-2xl font-bold mr-8">
-            Verus | <span class="text-indigo-500">Ware</span>
-          </div>
-        </template>
-        <template #item="{ item, props, hasSubmenu, root }">
-          <!-- Only customize root level items, let PrimeVue handle submenu items -->
-          <template v-if="root">
-            <router-link
-              v-if="item.routerLink"
-              :to="item.routerLink"
-              custom
-              v-slot="{ href, navigate, isActive }"
+      <template #item="{ item, props, hasSubmenu, root }">
+        <template v-if="root && item.to">
+          <RouterLink :to="item.to" custom v-slot="{ href, navigate, isActive }">
+            <a
+              :href="href"
+              :class="['nav-link', isActive && 'nav-link--active']"
+              @click="navigate"
             >
-              <a :href="href" @click="navigate" class="flex items-center">
-                <span :class="item.icon"></span>
-                <span class="ml-2">{{ item.label }}</span>
-                <Badge
-                  v-if="item.badge"
-                  class="ml-auto"
-                  :value="item.badge"
-                />
-                <i
-                  v-if="hasSubmenu"
-                  class="pi pi-angle-down ml-2"
-                ></i>
-              </a>
-            </router-link>
-            <a 
-              v-else 
-              v-ripple 
-              class="flex items-center" 
-              v-bind="props.action"
-            >
-              <span :class="item.icon"></span>
-              <span class="ml-2">{{ item.label }}</span>
-              <Badge
-                v-if="item.badge"
-                class="ml-2"
-                :value="item.badge"
-              />
-              <i
-                v-if="hasSubmenu"
-                class="pi pi-angle-down ml-2"
-              ></i>
+              <span :class="item.icon" />
+              <span class="nav-link-label">{{ item.label }}</span>
             </a>
-          </template>
-          <!-- Let PrimeVue handle submenu items with default template -->
-          <template v-else>
-            <a v-ripple v-bind="props.action">
-              <span :class="item.icon"></span>
-              <span>{{ item.label }}</span>
-            </a>
-          </template>
+          </RouterLink>
         </template>
-        <template #end>
-          <Button
-            label="DB Connection Check"
-            icon="pi pi-heart"
-            @click="handleHealthCheck"
-            :loading="isCheckingHealth"
-            :disabled="isCheckingHealth"
-            text
-            severity="secondary"
-            class="db-check-button"
-          />
+        <template v-else-if="root">
+          <a v-ripple class="nav-link" v-bind="props.action">
+            <span :class="item.icon" />
+            <span class="nav-link-label">{{ item.label }}</span>
+            <i v-if="hasSubmenu" class="pi pi-angle-down nav-chevron" />
+          </a>
         </template>
-      </Menubar>
-    </div>
-  </div>
+        <template v-else>
+          <a v-ripple v-bind="props.action" class="nav-sublink">
+            <span :class="item.icon" />
+            <span>{{ item.label }}</span>
+          </a>
+        </template>
+      </template>
+    </Menubar>
+  </header>
 </template>
 
-<script setup>
-  import { ref } from "vue";
-  import {
-    Badge,
-    Button,
-    Menubar,
-    Toast,
-  } from "primevue";
-  import { useHealthStore } from "@/stores/health";
+<script setup lang="ts">
+import { computed } from 'vue'
+import Menubar from 'primevue/menubar'
+import Toast from 'primevue/toast'
+import { navItems } from '@/nav/items'
 
-  const healthStore = useHealthStore();
-  const isCheckingHealth = ref(false);
-
-  const handleHealthCheck = async () => {
-    console.log('Health Check clicked');
-    isCheckingHealth.value = true;
-    try {
-      await healthStore.checkHealthWithToast();
-    } finally {
-      isCheckingHealth.value = false;
-    }
-  };
-
-  const items = ref([
-    {
-      label: "Home",
-      icon: "pi pi-home",
-      routerLink: "/",
-    },
-    {
-      label: "Things",
-      icon: "pi pi-pencil",
-      routerLink: "/blog",
-    },
-    {
-      label: "Projects",
-      icon: "pi pi-graduation-cap",
-      badge: 3,
-      items: [
-        {
-          label: "Coming Soon",
-          icon: "pi pi-check",
-        },
-        {
-          label: "Coming Soon",
-          icon: "pi pi-check",
-        },
-        {
-          label: "Coming Soon",
-          icon: "pi pi-check",
-        },
-      ],
-    },
-    {
-      label: "Profile",
-      icon: "pi pi-user",
-      routerLink: "/",
-    },
-  ]);
+const menuItems = computed(() => navItems)
 </script>
 
 <style scoped>
-  /* Add padding inside the Menubar */
-  .header-menubar :deep(.p-menubar) {
-    padding-left: 1rem;
-    padding-right: 1rem;
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.header-menubar :deep(.p-menubar) {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.site-logo {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--brand-charcoal);
+  text-decoration: none;
+  margin-right: 1.5rem;
+  white-space: nowrap;
+}
+
+.site-logo-accent {
+  color: var(--brand-indigo);
+}
+
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: color 0.15s, background 0.15s;
+}
+
+.nav-link:hover {
+  color: var(--brand-charcoal);
+  background: var(--surface-muted);
+}
+
+.nav-link--active {
+  color: var(--brand-indigo);
+  background: rgba(99, 102, 241, 0.08);
+}
+
+.nav-chevron {
+  font-size: 0.75rem;
+  margin-left: 0.15rem;
+}
+
+@media (max-width: 1023px) {
+  .header-menubar :deep(.p-menubar-mobile) {
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
   }
 
-  /* Design customization: Green checkmark icons in submenu */
-  :deep(.p-submenu-list .pi) {
-    color: #10b981;
+  .nav-link {
+    padding: 0.75rem 0.5rem;
   }
-
-  /* Functional: Hide DB Connection Check button label on mobile */
-  .db-check-button :deep(.p-button-label) {
-    display: none;
-  }
-
-  @media (min-width: 1024px) {
-    .db-check-button :deep(.p-button-label) {
-      display: inline-block;
-    }
-  }
-
-  /* Design customization: Replace all icons with green checkmarks on mobile */
-  @media (max-width: 1023px) {
-    /* Add margin to mobile overlay container (handles both main menu and submenus) */
-    :deep(.p-menubar-mobile) {
-      margin-left: 1rem;
-      margin-right: 1rem;
-    }
-
-    :deep(.p-menubar-mobile-active .p-menubar-root-list > li > a .pi:not(.pi-angle-down)) {
-      color: #10b981;
-      margin-right: 0.5rem;
-    }
-
-    :deep(.p-menubar-mobile-active .p-menubar-root-list > li > a .pi.pi-home::before),
-    :deep(.p-menubar-mobile-active .p-menubar-root-list > li > a .pi.pi-pencil::before),
-    :deep(.p-menubar-mobile-active .p-menubar-root-list > li > a .pi.pi-graduation-cap::before),
-    :deep(.p-menubar-mobile-active .p-menubar-root-list > li > a .pi.pi-user::before) {
-      content: "\e90b";
-    }
-
-    :deep(.p-menubar-mobile-active .p-submenu-list > li > a .pi) {
-      margin-right: 0.5rem;
-      color: #10b981;
-    }
-  }
+}
 </style>
-

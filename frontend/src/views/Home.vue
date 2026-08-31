@@ -1,106 +1,249 @@
 <template>
-  <div class="flex lg:flex-row flex-col gap-4 lg:gap-0 bg-surface-0 dark:bg-surface-900 relative overflow-hidden min-h-screen lg:min-h-0">
-    <div class="flex-1 flex items-center justify-center relative z-10">
-      <div class="p-6 pt-8 lg:p-12 relative w-full">
-        <!-- Mobile profile image - centered at top -->
-        <div class="lg:hidden flex justify-center mb-6">
-          <img
-            src="/steve_2.jpeg"
-            alt="profile"
-            class="profile-image-mobile"
+  <div class="home-page">
+    <!-- Hero -->
+    <section class="home-hero">
+      <div class="home-hero-content">
+        <p class="home-eyebrow">{{ site.owner.title }}</p>
+        <h1 class="home-title">
+          Hi, I'm {{ site.owner.name.split(' ')[0] }}.
+          <span class="home-title-accent">I build web products.</span>
+        </h1>
+        <p class="home-lead">
+          {{ site.description }}
+        </p>
+        <div class="home-actions">
+          <Button label="View my work" icon="pi pi-arrow-right" iconPos="right" @click="$router.push('/work')" />
+          <Button label="About" severity="secondary" outlined @click="$router.push('/about')" />
+        </div>
+      </div>
+
+      <div class="home-hero-visual">
+        <div class="home-hero-image-frame">
+          <ProfileImage size="hero" />
+        </div>
+      </div>
+    </section>
+
+    <!-- Featured work -->
+    <section class="home-section">
+      <div class="section-inner">
+        <div class="section-header">
+          <h2 class="section-title">Selected work</h2>
+          <p class="section-subtitle">
+            Independent builds — proof I do this on my own time too, when something's worth it
+          </p>
+        </div>
+
+        <div class="project-grid">
+          <ProjectCard
+            v-for="project in featuredProjects"
+            :key="project.slug"
+            :project="project"
           />
         </div>
-        <h1
-          class="text-3xl lg:text-5xl font-bold text-surface-900 dark:text-surface-0 mb-4 lg:leading-normal text-center lg:text-left"
-        >
-          Hi, I'm Steve <br /><span class="text-blue-500 dark:text-blue-400"
-            >Let me introduce you to my work</span
-          >
-        </h1>
-        <p
-          class="text-surface-700 dark:text-surface-200 leading-normal mb-8 text-center lg:text-left"
-        >
-          Actually, there is nothing to introduce you to yet.  It is all coming soon.
-        </p>
-        <div class="flex items-center justify-center lg:justify-start gap-6">
-          <Button label="Contact Me" type="button" @click="showContactModal = true" />
-        </div>
-      </div>
-    </div>
-    <!-- Desktop image container -->
-    <div class="hidden lg:flex flex-[0.75] pt-8 lg:pt-0 overflow-hidden relative lg:-ml-16 min-h-0">
-      <!-- Wide, soft gradient overlay for seamless blend -->
-      <div class="absolute left-0 top-0 bottom-0 w-64 lg:w-96 bg-gradient-to-r from-surface-0 via-surface-0/60 via-surface-0/20 to-transparent dark:from-surface-900 dark:via-surface-900/60 dark:via-surface-900/20 dark:to-transparent z-20 pointer-events-none"></div>
-      <img
-        src="/steve_2.jpeg"
-        alt="hero-1"
-        class="hero-image"
-      />
-    </div>
 
-    <!-- Contact Modal -->
-    <Dialog
-      v-model:visible="showContactModal"
-      modal
-      :style="{ width: '25rem' }"
-      :breakpoints="{ '960px': '75vw', '641px': '90vw' }"
-    >
-      <template #header>
-        <h3 class="text-xl font-semibold">Contact Me</h3>
-      </template>
-      <div class="flex flex-col items-center gap-4">
-        <img
-          src="/steve_2.jpeg"
-          alt="Steve"
-          class="w-32 h-32 rounded-full object-cover border-4 border-surface-200 dark:border-surface-700"
-        />
-        <div class="text-center">
-          <h4 class="text-2xl font-bold mb-4">Steve Babb</h4>
-          <div class="flex flex-col gap-3">
-            <div class="flex items-center gap-2">
-              <i class="pi pi-envelope text-primary"></i>
-              <a href="mailto:stevebabbmail@gmail.com" class="text-primary hover:underline">
-                stevebabbmail@gmail.com
-              </a>
-            </div>
-            <div class="flex items-center gap-2">
-              <i class="pi pi-linkedin text-primary"></i>
-              <a href="https://www.linkedin.com/in/steve-babb/" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">
-                linkedin.com/in/steve-babb
-              </a>
-            </div>
-          </div>
+        <div v-if="featuredProjects.length === 0" class="empty-state">
+          <p>Projects coming soon.</p>
         </div>
       </div>
-    </Dialog>
+    </section>
+
+    <!-- Brief about -->
+    <section class="home-section home-section--muted">
+      <div class="section-inner about-snippet">
+        <div>
+          <h2 class="section-title">A little about me</h2>
+          <p class="about-snippet-text">
+            I'm a senior engineer by day and a builder when something's worth the extra hours.
+            Kansas Beta is that project for me right now — complex systems aren't just what I do
+            at work.
+          </p>
+          <Button
+            label="Read more"
+            link
+            class="about-snippet-link"
+            icon="pi pi-arrow-right"
+            iconPos="right"
+            @click="$router.push('/about')"
+          />
+        </div>
+      </div>
+    </section>
   </div>
 </template>
-<script setup>
-  import { ref } from "vue";
-  import Button from "primevue/button";
-  import Dialog from "primevue/dialog";
 
-  const showContactModal = ref(false);
+<script setup lang="ts">
+import Button from 'primevue/button'
+import { site } from '@/content/site'
+import { getFeaturedProjects } from '@/content/projects'
+import { usePageMeta } from '@/composables/usePageMeta'
+import ProfileImage from '@/components/ProfileImage.vue'
+import ProjectCard from '@/components/ProjectCard.vue'
+
+const featuredProjects = getFeaturedProjects()
+
+usePageMeta(() => ({
+  title: site.owner.name,
+  description: site.description,
+}))
 </script>
+
 <style scoped>
-  /* Mobile profile image - centered hero image */
-  .profile-image-mobile {
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
-    object-fit: cover;
-    object-position: center 20%;
-  }
+.home-page {
+  flex: 1;
+}
 
-  /* Desktop hero image */
-  .hero-image {
-    width: 100%;
-    max-width: 100%;
-    height: 100%;
-    max-height: 100%;
-    object-fit: contain;
-    object-position: right;
-    clip-path: polygon(15% 0%, 100% 0%, 100% 100%, 0% 100%);
+.home-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 4rem;
+}
+
+@media (min-width: 1024px) {
+  .home-hero {
+    flex-direction: row;
+    align-items: center;
+    gap: 3rem;
+    padding: 4rem 1.5rem 5rem;
   }
+}
+
+.home-hero-content {
+  flex: 1;
+}
+
+.home-eyebrow {
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--brand-indigo);
+  margin: 0 0 0.75rem;
+}
+
+.home-title {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  font-weight: 600;
+  line-height: 1.15;
+  color: var(--brand-charcoal);
+  margin: 0 0 1.25rem;
+}
+
+.home-title-accent {
+  display: block;
+  color: var(--brand-indigo);
+}
+
+.home-lead {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: var(--text-muted);
+  max-width: 36rem;
+  margin: 0 0 1.75rem;
+}
+
+.home-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.home-hero-visual {
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: 22rem;
+  margin: 0 auto;
+}
+
+@media (min-width: 1024px) {
+  .home-hero-visual {
+    flex: 0.75;
+    max-width: none;
+    margin: 0;
+  }
+}
+
+.home-hero-image-frame {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  border-radius: 1rem;
+  overflow: hidden;
+  background: var(--surface-page);
+  border: 1px solid var(--border-subtle);
+}
+
+.home-section {
+  padding: 4rem 1.5rem;
+}
+
+.home-section--muted {
+  background: var(--surface-muted);
+}
+
+.section-inner {
+  max-width: 72rem;
+  margin: 0 auto;
+}
+
+.section-header {
+  margin-bottom: 2rem;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+  font-weight: 600;
+  color: var(--brand-charcoal);
+  margin: 0 0 0.5rem;
+}
+
+.section-subtitle {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 1rem;
+}
+
+.project-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .project-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1199px) {
+  .project-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.about-snippet {
+  max-width: 40rem;
+}
+
+.about-snippet-text {
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: var(--text-muted);
+  max-width: 36rem;
+  margin: 0 0 1rem;
+}
+
+.about-snippet-link {
+  padding-left: 0;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-muted);
+}
 </style>
-
