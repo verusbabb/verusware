@@ -20,9 +20,4 @@ export const navItems: NavItem[] = [
     icon: 'pi pi-user',
     to: '/about',
   },
-  {
-    label: 'Writing',
-    icon: 'pi pi-pen-to-square',
-    to: '/writing',
-  },
 ]

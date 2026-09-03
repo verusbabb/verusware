@@ -24,13 +24,40 @@
       </div>
     </section>
 
+    <!-- Platform preview -->
+    <section class="home-section home-section--muted">
+      <div class="section-inner">
+        <div class="section-header">
+          <h2 class="section-title">Chapter platform</h2>
+          <p class="section-subtitle">
+            Kansas Beta runs rush, members, documents, email, and AI search on one backbone —
+            with access control throughout.
+          </p>
+        </div>
+        <div class="platform-chips">
+          <div v-for="cap in platformPreview" :key="cap.title" class="platform-chip">
+            <span :class="['platform-chip-icon', cap.icon]" />
+            <span class="platform-chip-label">{{ cap.title }}</span>
+          </div>
+        </div>
+        <Button
+          label="Read the full case study"
+          link
+          class="platform-cta"
+          icon="pi pi-arrow-right"
+          iconPos="right"
+          @click="$router.push('/work/kansas-beta')"
+        />
+      </div>
+    </section>
+
     <!-- Featured work -->
     <section class="home-section">
       <div class="section-inner">
         <div class="section-header">
           <h2 class="section-title">Selected work</h2>
           <p class="section-subtitle">
-            Independent builds — proof I do this on my own time too, when something's worth it
+            Kansas Beta — a live chapter platform and the reference deployment for Verusware
           </p>
         </div>
 
@@ -54,9 +81,9 @@
         <div>
           <h2 class="section-title">A little about me</h2>
           <p class="about-snippet-text">
-            I'm a senior engineer by day and a builder when something's worth the extra hours.
-            Kansas Beta is that project for me right now — complex systems aren't just what I do
-            at work.
+            I'm a senior engineer by day. Kansas Beta is the platform I built outside of that —
+            rush CRM, member tools, CMS, campaigns, and AI search with real access control.
+            Same engineering standards, fully mine to share.
           </p>
           <Button
             label="Read more"
@@ -75,12 +102,18 @@
 <script setup lang="ts">
 import Button from 'primevue/button'
 import { site } from '@/content/site'
+import { kansasBeta } from '@/content/projects/kansas-beta'
 import { getFeaturedProjects } from '@/content/projects'
 import { usePageMeta } from '@/composables/usePageMeta'
 import ProfileImage from '@/components/ProfileImage.vue'
 import ProjectCard from '@/components/ProjectCard.vue'
 
 const featuredProjects = getFeaturedProjects()
+
+const platformPreview = (kansasBeta.capabilities ?? []).slice(0, 6).map((c) => ({
+  title: c.title,
+  icon: c.icon,
+}))
 
 usePageMeta(() => ({
   title: site.owner.name,
@@ -178,6 +211,35 @@ usePageMeta(() => ({
 
 .home-section {
   padding: 4rem 1.5rem;
+}
+
+.platform-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-bottom: 1.25rem;
+}
+
+.platform-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 0.85rem;
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--brand-charcoal);
+}
+
+.platform-chip-icon {
+  font-size: 0.9rem;
+  color: var(--brand-indigo);
+}
+
+.platform-cta {
+  padding-left: 0;
 }
 
 .home-section--muted {

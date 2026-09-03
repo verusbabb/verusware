@@ -2,7 +2,7 @@
   <div class="work-page">
     <PageHero
       title="Work"
-      subtitle="Independent work under Verusware. My day job is a large enterprise app — most of what I build lives there."
+      subtitle="Independent platforms under Verusware. Kansas Beta is a chapter operating system — not a brochure site."
       compact
     />
 
@@ -29,7 +29,7 @@ import ProjectCard from '@/components/ProjectCard.vue'
 usePageMeta(() => ({
   title: 'Work',
   description:
-    'Independent projects by Steve Babb — work built outside a senior full-stack role on a large enterprise platform.',
+    'Kansas Beta — a production chapter platform with rush CRM, RBAC, email campaigns, and AI search. Built by Steve Babb under Verusware.',
 }))
 </script>
 

@@ -2,9 +2,9 @@ import type { SiteConfig } from './types'
 
 export const site: SiteConfig = {
   name: 'Verusware',
-  tagline: 'Independent software builds',
+  tagline: 'Chapter platforms & independent software',
   description:
-    'Senior full-stack engineer building complex web products — enterprise platforms by day, independent projects when something is worth the extra hours.',
+    'Senior full-stack engineer building complex products — enterprise platforms by day, chapter operating systems like Kansas Beta when something is worth building right.',
   owner: {
     name: 'Steve Babb',
     title: 'Senior full-stack engineer',
